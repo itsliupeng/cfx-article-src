@@ -118,7 +118,9 @@ __global__ static void __launch_bounds__(kNumThreads, 1)
   auto blkCoord = make_coord(blockIdx.x, blockIdx.y);
   Tensor gS = local_tile(mS, tileShape, blkCoord);
 
-  auto cta_tmaS = tmaLoad.get_slice(block_rank_in_cluster);
+  // auto cta_tmaS = tmaLoad.get_slice(block_rank_in_cluster);
+  // printf("block_rank_in_cluster: %d\n", block_rank_in_cluster);
+  auto cta_tmaS = tmaLoad.get_slice(Int<0>{});
   auto tSgSX = cta_tmaS.partition_S(gS);
   auto tSgS = group_modes<1, rank(tSgSX)>(tSgSX);
   auto tSsSX = cta_tmaS.partition_D(sS);
@@ -286,7 +288,8 @@ int copy_host_tma_load_and_store_kernel_multicast(int M, int N,
 
   auto gmemLayoutS = make_layout(tensor_shape, LayoutRight{});
   auto gmemLayoutD = make_ordered_layout(tensor_shape_out, Step<_1, _0, _2>{});
-  //   print(gmemLayoutD);
+  print("gmemLayoutS:\n"); print(gmemLayoutS); print("\n");
+  print("gmemLayoutD:\n"); print(gmemLayoutD); print("\n");
 
   Tensor tensor_S = make_tensor(
       make_gmem_ptr(thrust::raw_pointer_cast(d_S.data())), gmemLayoutS);
@@ -302,17 +305,17 @@ int copy_host_tma_load_and_store_kernel_multicast(int M, int N,
       tile_to_shape(cfx::getSmemLayoutK<Element, TILE_N>(), tileShape);
   auto tma_load = make_tma_copy(SM90_TMA_LOAD_MULTICAST{}, tensor_S, smemLayout,
                                 tileShape, size(cluster_shape));
-  auto tma_load_no_multicast =
-      make_tma_copy(SM90_TMA_LOAD{}, tensor_S, smemLayout, tileShape, _1());
+  // auto tma_load_no_multicast =
+  //     make_tma_copy(SM90_TMA_LOAD{}, tensor_S, smemLayout, tileShape, _1());
+  print("tma_load\n"); print(tma_load); print("\n");
 
-  // print(tma_load);
   auto tma_store = make_tma_copy(SM90_TMA_STORE{}, tensor_D, smemLayout,
                                  tileShape, Int<1>{});
-  // print(tma_store);
+  print("tma_store\n"); print(tma_store); print("\n");
 
   ParamsMulticast params(tma_load, tma_store, gmemLayoutS, gmemLayoutD,
                          smemLayout, tileShape, cluster_shape);
-  ParamsMulticast params_no_multicast(tma_load_no_multicast, tma_store,
+  ParamsMulticast params_no_multicast(tma_load, tma_store,
                                       gmemLayoutS, gmemLayoutD, smemLayout,
                                       tileShape, cluster_shape);
 
@@ -380,6 +383,26 @@ int copy_host_tma_load_and_store_kernel_multicast(int M, int N,
   }
 
   std::cout << "Success " << good << ", Fail " << bad << std::endl;
+
+  #if 1
+    // Print elements of h_S in the format described
+    std::cout << "Elements of h_S:\n";
+    for (size_t i = 0; i < h_S.size(); ++i) {
+        std::cout << std::setw(4) << h_S[i];
+        if ((i + 1) % 16 == 0 || i == h_S.size() - 1) {
+            std::cout << "\n";
+        }
+    }
+
+    // Print elements of h_D in the format described
+    std::cout << "\nElements of h_D:\n";
+    for (size_t i = 0; i < h_D.size(); ++i) {
+        std::cout << std::setw(4) << h_D[i];
+        if ((i + 1) % 16 == 0 || i == h_D.size() - 1) {
+            std::cout << "\n";
+        }
+    }
+  #endif
 
   return 0;
 }
