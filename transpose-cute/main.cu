@@ -14,19 +14,19 @@ int main(int argc, char const **argv) {
   using Element = float;
 
   int M, N;
-  cmd.get_cmd_line_argument("M", M, 32768);
-  cmd.get_cmd_line_argument("N", N, 32768);
+  cmd.get_cmd_line_argument("M", M, 32768); // B S N
+  cmd.get_cmd_line_argument("N", N, 512);
 
   std::cout << "Matrix size: " << M << " x " << N << std::endl;
 
   printf("Baseline copy; No transpose\n");
   benchmark<Element, false>(copy_baseline<Element>, M, N);
   
-  printf("\nNaive (no tma, no smem, not vectorized):\n");
-  benchmark<Element>(transpose_naive<Element>, M, N);
+  // printf("\nNaive (no tma, no smem, not vectorized):\n");
+  // benchmark<Element>(transpose_naive<Element>, M, N);
 
-  printf("\nSMEM transpose (no tma, smem passthrough, not vectorized, not swizzled):\n");
-  benchmark<Element>(transpose_smem<Element, false>, M, N);
+  // printf("\nSMEM transpose (no tma, smem passthrough, not vectorized, not swizzled):\n");
+  // benchmark<Element>(transpose_smem<Element, false>, M, N);
 
   printf("\nSwizzle (no tma, smem passthrough, not vectorized, swizzled):\n");
   benchmark<Element>(transpose_smem<Element, true>, M, N);

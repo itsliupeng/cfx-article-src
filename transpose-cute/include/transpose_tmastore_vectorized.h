@@ -139,6 +139,7 @@ template <typename Element> void transpose_tma(TransposeParams<Element> params) 
 
   size_t smem_size =
       int(sizeof(SharedStorageTranspose<Element, decltype(smemLayoutD)>));
+  printf("smem = %d", int(smem_size));
 
   //
   // Determine grid and block dimensions
