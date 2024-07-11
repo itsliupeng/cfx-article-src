@@ -92,6 +92,17 @@ __global__ static void __launch_bounds__(256, 1)
 
   Tensor rmem = make_tensor_like(tSgS);               // (ThrValM, ThrValN)
 
+#ifdef LP_DEBUG
+  if (thread0()) {
+    print("gS: "); print(gS); print("\n");
+    print("tSgS: "); print(tSgS); print("\n");
+    print("gD: "); print(gD); print("\n");
+    print("tDgD: "); print(tDgD); print("\n");
+    print("rmem: "); print(rmem); print("\n");
+    print("tiled_copy: "); print(tiled_copy); print("\n");
+  }
+#endif
+
   copy(tSgS, rmem);
   copy(rmem, tDgD);
 }

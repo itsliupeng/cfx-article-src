@@ -53,6 +53,22 @@ __global__ static void __launch_bounds__(256, 1)
   Tensor tDgD = local_partition(gD, tD, threadIdx.x);
   Tensor tDsD = local_partition(sD, tD, threadIdx.x);
 
+#ifdef LP_DEBUG
+  if (thread0()) {
+    print("sS: "); print(sS); print("\n");
+    print("gS: "); print(gS); print("\n");
+    print("tS: "); print(tS); print("\n");
+    print("tSgS: "); print(tSgS); print("\n");
+    print("tSsS: "); print(tSsS); print("\n");
+    print("sD: "); print(sD); print("\n");
+    print("gD: "); print(gD); print("\n");
+    print("tD: "); print(tD); print("\n");
+    print("tDgD: "); print(tDgD); print("\n");
+    print("tDsD: "); print(tDsD); print("\n");
+
+  }
+#endif
+
   cute::copy(tSgS, tSsS); // LDGSTS
 
   cp_async_fence();
@@ -81,7 +97,7 @@ template <typename Element, bool isSwizzled = true> void transpose_smem(Transpos
   //
 
   using bM = Int<64>;
-  using bN = Int<64>;
+  using bN = Int<32>;
 
   auto block_shape = make_shape(bM{}, bN{});       // (bM, bN)
   auto block_shape_trans = make_shape(bN{}, bM{}); // (bN, bM)
@@ -107,6 +123,25 @@ template <typename Element, bool isSwizzled = true> void transpose_smem(Transpos
   size_t smem_size = int(
       sizeof(SharedStorageTranspose<Element, decltype(smemLayoutS_swizzle)>));
 
+#ifdef LP_DEBUG
+  if (thread0()) {
+    print("block_shape: "); print(block_shape); print("\n");
+    print("block_shape_trans: "); print(block_shape_trans); print("\n");
+    print("tensor_S: "); print(tensor_S); print("\n");
+    print("tensor_D: "); print(tensor_D); print("\n");
+    print("tileShapeS: "); print(tileShapeS); print("\n");
+    print("tileShapeD: "); print(tileShapeD); print("\n");
+    print("tiled_tensor_S: "); print(tiled_tensor_S); print("\n");
+    print("tiled_tensor_D: "); print(tiled_tensor_D); print("\n");
+    print("smemLayoutS: "); print(smemLayoutS); print("\n");
+    print("smemLayoutD: "); print(smemLayoutD); print("\n");
+    print("smemLayoutS_swizzle: "); print(smemLayoutS_swizzle); print("\n");
+    print("smemLayoutD_swizzle: "); print(smemLayoutD_swizzle); print("\n");
+    print("threadLayoutS: "); print(threadLayoutS); print("\n");
+    print("threadLayoutD: "); print(threadLayoutD); print("\n");
+    print("smem_size: "); print(smem_size); print("\n");
+  }
+#endif
   //
   // Determine grid and block dimensions
   //

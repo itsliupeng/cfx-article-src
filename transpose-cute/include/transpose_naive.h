@@ -41,6 +41,19 @@ transposeKernelNaive(TensorS const S, TensorD const DT,
 
   Tensor rmem = make_tensor_like(tSgS);
 
+#ifdef LP_DEBUG
+  if (thread0()) {
+    print("gS: "); print(gS); print("\n");
+    print("tS: "); print(tS); print("\n");
+    print("tSgS: "); print(tSgS); print("\n");
+    print("gDT: "); print(gDT); print("\n");
+    print("tD: "); print(tD); print("\n");
+    print("tDgDT: "); print(tDgDT); print("\n");
+    print("rmem: "); print(rmem); print("\n");
+    // print("tiled_copy: "); print(tiled_copy); print("\n");
+  }
+#endif
+
   copy(tSgS, rmem);
   copy(rmem, tDgDT);
 }
@@ -58,7 +71,7 @@ template <typename Element> void transpose_naive(TransposeParams<Element> params
   Tensor tensor_D = make_tensor(make_gmem_ptr(params.output), gmemLayoutD);
   
   // Make a transposed view of the output
-  auto gmemLayoutDT = make_layout(tensor_shape, GenColMajor{});
+  auto gmemLayoutDT = make_layout(tensor_shape, LayoutLeft{});
   Tensor tensor_DT = make_tensor(make_gmem_ptr(params.output), gmemLayoutDT);
   
   //
@@ -71,8 +84,10 @@ template <typename Element> void transpose_naive(TransposeParams<Element> params
   auto block_shape = make_shape(bM{}, bN{});       // (bM, bN)
   auto block_shape_trans = make_shape(bN{}, bM{}); // (bN, bM)
   
-  Tensor tiled_tensor_S = tiled_divide(tensor_S, block_shape); // ((bM, bN), m', n')
-  Tensor tiled_tensor_DT = tiled_divide(tensor_DT, block_shape_trans); // ((bN, bM), n', m')
+  Tensor tiled_tensor_S = tiled_divide(tensor_S, block_shape); // ((bM, bN), m', n')   ((_64,_64),512,8):((512,_1),32768,_64)
+  Tensor tiled_tensor_DT = tiled_divide(tensor_DT, block_shape_trans); // ((bN, bM), n', m')  ((_64,_64),512,8):((_1,32768),_64,2097152)
+  print("tiled_tensor_S: "); print(tiled_tensor_S); print("\n");
+  print("tiled_tensor_DT: "); print(tiled_tensor_DT); print("\n");
   
   auto threadLayoutS =
       make_layout(make_shape(Int<8>{}, Int<32>{}), LayoutRight{});
